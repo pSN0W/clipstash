@@ -6,7 +6,7 @@ use std::str::FromStr;
 pub struct Password(Option<String>);
 
 impl Password{
-    fn new<T:Into<Option<String>>> (password:T) -> Result<Self,ClipError> {
+    pub fn new<T:Into<Option<String>>> (password:T) -> Result<Self,ClipError> {
         // Into<Option<String>> let's us have both string and optional string as argumen
         let password : Option<String> = password.into();
 
@@ -26,11 +26,11 @@ impl Password{
         // and return a ClipError ( checks like length and all )
     }
 
-    fn into_inner(self) -> Option<String> {
+    pub fn into_inner(self) -> Option<String> {
         self.0
     }
 
-    fn has_password(&self) -> bool {
+    pub fn has_password(&self) -> bool {
         self.0.is_some()
     }
 
