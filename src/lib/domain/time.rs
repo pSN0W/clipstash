@@ -4,7 +4,7 @@ use derive_more::From;
 use std::str::FromStr;
 
 #[derive(Debug,Clone,Serialize,Deserialize,From)]
-struct Time(DateTime<Utc>);
+pub struct Time(DateTime<Utc>);
 
 impl Time {
     pub fn into_inner(self) -> DateTime<Utc> {
