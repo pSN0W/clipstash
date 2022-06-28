@@ -1,5 +1,5 @@
 use crate::data::DbId;
-use crate::{ClipError,Time};
+use crate::{ClipError,ShortCode,Time};
 use chrono::{NaiveDateTime};
 use std::convert::TryFrom;
 use std::str::FromStr;
@@ -45,4 +45,29 @@ impl TryFrom<Clip> for crate::domain::Clip {
 
 pub struct GetClip {
     pub (in crate::data) shortcode : String,
+}
+
+impl From<ShortCode> for GetClip {
+    fn from(shortcode: ShortCode) -> Self {
+        Self { shortcode: shortcode.into_inner() }
+    }
+}
+
+impl From<String> for GetClip {
+    fn from(shortcode: String) -> Self {
+        Self { shortcode }
+    }
+}
+
+// A structure to put new clip in databse
+// hits is removed because we want it to be 0
+// posted has been changed to i16
+pub struct NewClip{
+    pub (in crate::data) clip_id : String,
+    pub (in crate::data) shortcode : String,
+    pub (in crate::data) content : String,
+    pub (in crate::data) title : Option<String>,
+    pub (in crate::data) posted : i16,
+    pub (in crate::data) expires : Option<NaiveDateTime>,
+    pub (in crate::data) password : Option<String>,
 }

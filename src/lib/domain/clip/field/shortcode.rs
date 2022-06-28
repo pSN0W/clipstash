@@ -7,7 +7,7 @@ use derive_more::From;
 pub struct ShortCode(String);
 
 impl ShortCode {
-    fn new() -> Self {
+    pub fn new() -> Self {
         use rand::prelude::*;
         // random characters to choose from
         let allowed_charecters = [
@@ -30,11 +30,11 @@ impl ShortCode {
         Self(shortcode)
     }
 
-    fn as_str(&self) -> &str {
+    pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
 
-    fn into_inner(self) -> String {
+    pub fn into_inner(self) -> String {
         self.0
     }
 }
