@@ -6,7 +6,7 @@ use std::str::FromStr;
 pub struct Title(Option<String>);
 
 impl Title {
-    fn new<T:Into<Option<String>>>(title:T) -> Self {
+    pub fn new<T:Into<Option<String>>>(title:T) -> Self {
         let title:Option<String> = title.into();
         match title {
             Some(title) => {
