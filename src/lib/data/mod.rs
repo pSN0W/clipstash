@@ -2,12 +2,14 @@ use serde::{Serialize,Deserialize};
 use derive_more::{Display,From};
 use uuid::Uuid;
 use std::str::FromStr;
+use sqlx::Sqlite;
 
 #[derive(Debug,thiserror::Error)]
 pub enum DataError {
     #[error("database error : {0}")]
     DataBase(#[from] sqlx::Error)
 }
+
 
 // We are making lots og type annotations here so that if we want to go
 // go from sqlite to postgres or mangoDb we will only have to make 
@@ -27,6 +29,31 @@ pub type Transaction<'t> = sqlx::Transaction<'t,Sqlite>;
 // These are just rows and query returned by the database
 pub type AppDatabaseRow = sqlx::sqlite::SqliteRow;
 pub type AppQueryResult = sqlx::sqlite::SqliteQueryResult;
+
+
+pub struct Database<D:sqlx::Database> (sqlx::Pool<D>);
+
+impl Database<Sqlite> {
+    pub async fn new(connection_string:&str) -> Self{
+        // Try to make connection to a pool using string
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+                                        .connect(connection_string)
+                                        .await;
+        match pool {
+            Ok(pool) => Self(pool),
+            // If connection fails the print these in error consoles and close the program
+            Err(e) => {
+                eprintln!("{}\n",e);
+                eprintln!("If the database has not been created run : \n $ sqlx database setup \n");
+                panic!("database connection error");
+            }
+        }
+    } 
+
+    pub fn get_pool(&self) -> &DatabasePool {
+        &self.0
+    }
+}
 
 
 #[derive(Debug,Clone,Display,From,Serialize,Deserialize)]
