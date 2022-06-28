@@ -1,21 +1,28 @@
 use crate::data::DbId;
-use crate::{ClipError,ShortCode,Time};
-use chrono::{NaiveDateTime,Utc};
+use crate::{ClipError,Time};
+use chrono::{NaiveDateTime};
 use std::convert::TryFrom;
 use std::str::FromStr;
 
+// this structure is used to store the values directly coming out from the sql row
+// this doesn't contain the validation that we emposed in our clip
+// this is crate::data::Clip and the validates one is crate::domain::Clip
+// the sqlx::FromRow function will convert a row from the data into this struct
+// hence it becomes important for the datatypes at both places to match
+// pub (in crate::data) means it is only public in data
 #[derive(Debug,sqlx::FromRow)]
 pub struct Clip{
-    clip_id : String,
-    shortcode : String,
-    content : String,
-    title : Option<String>,
-    posted : NaiveDateTime,
-    expires : Option<NaiveDateTime>,
-    password : Option<String>,
-    hits : i64,
+    pub (in crate::data) clip_id : String,
+    pub (in crate::data) shortcode : String,
+    pub (in crate::data) content : String,
+    pub (in crate::data) title : Option<String>,
+    pub (in crate::data) posted : NaiveDateTime,
+    pub (in crate::data) expires : Option<NaiveDateTime>,
+    pub (in crate::data) password : Option<String>,
+    pub (in crate::data) hits : i64,
 }
 
+// this will convert it to our validated clip
 impl TryFrom<Clip> for crate::domain::Clip {
     type Error = ClipError;
 
@@ -34,4 +41,8 @@ impl TryFrom<Clip> for crate::domain::Clip {
             }
         )
     }
+}
+
+pub struct GetClip {
+    pub (in crate::data) shortcode : String,
 }
