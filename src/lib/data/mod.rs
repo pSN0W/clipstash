@@ -88,3 +88,9 @@ impl FromStr for DbId {
         Ok(Self(Uuid::parse_str(s)?))
     }
 }
+
+impl From<DbId> for String {
+    fn from(id: DbId) -> Self {
+        format!("{}",id)
+    }
+}

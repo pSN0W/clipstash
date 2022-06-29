@@ -14,6 +14,7 @@ impl Time {
     pub fn fron_naive_utc(local:NaiveDateTime) -> Self {
         Time(DateTime::from_utc(local, Utc))
     }
+
 }
 
 impl FromStr for Time{
