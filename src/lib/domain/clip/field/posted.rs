@@ -6,7 +6,7 @@ use derive_more::Constructor;
 pub struct Posted(Time);
 
 impl Posted {
-    fn into_inner(self) -> Time {
+    pub fn into_inner(self) -> Time {
         self.0
     }
 }

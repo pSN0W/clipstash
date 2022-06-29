@@ -20,7 +20,7 @@ impl Title {
         }
     }
 
-    fn into_inner(self) -> Option<String> {
+    pub fn into_inner(self) -> Option<String> {
         self.0
     }
 }
