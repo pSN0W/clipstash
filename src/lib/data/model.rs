@@ -59,6 +59,12 @@ impl From<String> for GetClip {
     }
 }
 
+impl From<crate::service::ask::GetClip> for GetClip {
+    fn from(req: crate::service::ask::GetClip) -> Self {
+        Self { shortcode: req.shortcode.into_inner() }
+    }
+}
+
 // A structure to put new clip in databse
 // hits is removed because we want it to be 0
 // posted has been changed to i16

@@ -1,4 +1,6 @@
 use crate::{DataError,ClipError};
+pub mod ask;
+pub mod action;
 
 #[derive(Debug,thiserror::Error)]
 pub enum ServiceError {
@@ -12,7 +14,7 @@ pub enum ServiceError {
     NotFound,
 
     #[error("Permission not met : {0}")]
-    Permission(String)
+    PermissionError(String)
 }
 
 impl From<DataError> for ServiceError {
