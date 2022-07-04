@@ -1,6 +1,9 @@
 pub mod ctx;
 pub mod renderer;
 
+// rocket::Responder let us return an error code with the error
+// 500 is a server error while 404 is client (optimally no server error)
+// We can't use thiserror::From here because it is uncompaitible with rocket
 #[derive(rocket::Responder)]
 pub enum PageError {
     #[response(status = 500)]
