@@ -1,5 +1,6 @@
 pub mod ctx;
 pub mod renderer;
+pub mod form;
 
 // rocket::Responder let us return an error code with the error
 // 500 is a server error while 404 is client (optimally no server error)
