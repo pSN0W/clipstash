@@ -1,6 +1,7 @@
 use serde::{ Deserialize, Serialize};
 use super::super::ClipError;
 use std::str::FromStr;
+use rocket::form::{FromFormField,ValueField,self};
 
 #[derive(Debug,Clone,Serialize,Deserialize,PartialEq,PartialOrd)]
 pub struct Password(Option<String>);
@@ -46,5 +47,15 @@ impl FromStr for Password {
     type Err = ClipError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s.to_string())
+    }
+}
+
+#[rocket::async_trait]
+impl<'v> FromFormField<'v> for Password {
+    fn from_value(field:ValueField< 'v>) -> form::Result< 'v,Self> {
+        Ok(
+            Self::new(field.value.to_owned())
+                .map_err(|e| form::Error::validation(format!("{}",e)))?
+        )
     }
 }
