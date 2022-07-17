@@ -1,41 +1,51 @@
-use serde::{ Deserialize, Serialize};
-use super::super::ClipError;
-use std::str::FromStr;
+use crate::domain::clip::ClipError;
 use derive_more::From;
+use rocket::{UriDisplayPath, UriDisplayQuery};
+use serde::{Deserialize, Serialize};
+use rocket::request::FromParam;
+use std::str::FromStr;
 
-#[derive(Debug,Clone,Serialize,Deserialize,From)]
+/// The shortcode field for a [`Clip`](crate::domain::clip::Clip).
+///
+/// The shortcode is utilized by clients to locate the `Clip` within the service.
+#[derive(Debug, Clone, Deserialize, Serialize, From, UriDisplayQuery, UriDisplayPath, Hash, Eq, PartialEq)]
 pub struct ShortCode(String);
 
 impl ShortCode {
+    /// Create a new `ShortCode` field.
     pub fn new() -> Self {
         use rand::prelude::*;
-        // random characters to choose from
-        let allowed_charecters = [
-            'a','b','c','d','1','2','3','4'
+        let allowed_chars = [
+            'a', 'b', 'c', 'd', '1', '2', '3', '4'
         ];
 
         let mut rng = thread_rng();
-
-        // tells the length of the string
         let mut shortcode = String::with_capacity(10);
-        // choosing a random character each time and pushing it to shortcode
-        // * here because .choose returs a borrowed char
         for _ in 0..10 {
             shortcode.push(
-                *allowed_charecters
+                *allowed_chars
                     .choose(&mut rng)
-                    .expect("Allowed characters can't be empty")
-            )
+                    .expect("sampling array should have values"),
+            );
         }
         Self(shortcode)
     }
 
+    /// Return the underlying [`&str`].
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
 
+    /// Return the underlying [`String`].
     pub fn into_inner(self) -> String {
         self.0
+    }
+}
+
+/// The Default implementation is a new randomly generated shortcode.
+impl Default for ShortCode {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -47,7 +57,15 @@ impl From<ShortCode> for String {
 
 impl From<&str> for ShortCode {
     fn from(shortcode: &str) -> Self {
-        Self(shortcode.to_owned())
+        ShortCode(shortcode.to_owned())
+    }
+}
+
+impl<'r> FromParam<'r> for ShortCode {
+    type Error = &'r str;
+
+    fn from_param(param: &'r str) -> Result<Self, Self::Error> {
+        Ok(ShortCode::from(param))
     }
 }
 

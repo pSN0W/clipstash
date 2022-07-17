@@ -1,18 +1,13 @@
-use serde::{ Serialize , Deserialize};
 use derive_more::Constructor;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug,Clone,Constructor,Serialize,Deserialize)]
+/// The hits field for a [`Clip`](crate::domain::clip::Clip).
+#[derive(Clone, Constructor, Debug, Deserialize, Serialize)]
 pub struct Hits(u64);
 
-/*
-Constructor macro creates the new function automatically for us
-pub fn new(data:u64) -> Self {
-    Self(data)
-}
-*/
-
 impl Hits {
-    pub fn into_inner(self) -> u64{
+    /// Return the underlying [`u64`].
+    pub fn into_inner(self) -> u64 {
         self.0
     }
 }

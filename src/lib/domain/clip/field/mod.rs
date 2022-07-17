@@ -1,3 +1,5 @@
+//! Fields for the [`Clip`](crate::Clip) data type.
+
 mod clip_id;
 pub use clip_id::ClipId;
 

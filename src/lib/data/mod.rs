@@ -1,96 +1,111 @@
+//! Database models and queries.
 pub mod model;
 pub mod query;
 
-use serde::{Serialize,Deserialize};
-use derive_more::{Display,From};
+use derive_more::{Display, From};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use std::str::FromStr;
 use sqlx::Sqlite;
 
-#[derive(Debug,thiserror::Error)]
+/// The possible errors that may occur when working with a database.
+#[derive(Debug, thiserror::Error)]
 pub enum DataError {
-    #[error("database error : {0}")]
-    DataBase(#[from] sqlx::Error)
+    /// Database error.
+    #[error("database error: {0}")]
+    Database(#[from] sqlx::Error)
 }
 
-
-// We are making lots og type annotations here so that if we want to go
-// go from sqlite to postgres or mangoDb we will only have to make 
-// changes here
+/// Concrete database pool wrapper.
 pub type AppDatabase = Database<Sqlite>;
-
-// This is a pool of connection to our dataset. Sql library will make multiple
-// connection with our dataset and constantly reuse them this will greatly speed up things
-// as we don't need to make multiple connections
+/// Concrete database pool.
 pub type DatabasePool = sqlx::sqlite::SqlitePool;
-
-// Transaction allows us to roll back in case of any issues.
-// So if there are multiple requests and some error occurs then transaction will
-// allow us to roll back  
-pub type Transaction<'t> = sqlx::Transaction<'t,Sqlite>;
-
-// These are just rows and query returned by the database
+/// Concrete database transaction.
+pub type Transaction<'t> = sqlx::Transaction<'t, Sqlite>;
+/// Concrete database row.
 pub type AppDatabaseRow = sqlx::sqlite::SqliteRow;
+/// Concrete database query result.
 pub type AppQueryResult = sqlx::sqlite::SqliteQueryResult;
 
+/// Wrapper around a database pool.
+pub struct Database<D: sqlx::Database>(sqlx::Pool<D>);
 
-pub struct Database<D:sqlx::Database> (sqlx::Pool<D>);
-
+/// Implementation of the `Database` wrapper for `Sqlite`.
 impl Database<Sqlite> {
-    pub async fn new(connection_string:&str) -> Self{
-        // Try to make connection to a pool using string
+    /// Create a new `Database` with the provided `connection_string`.
+    pub async fn new(connection_str: &str) -> Self {
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
-                                        .connect(connection_string)
-                                        .await;
+            .connect(connection_str)
+            .await;
         match pool {
             Ok(pool) => Self(pool),
-            // If connection fails the print these in error consoles and close the program
             Err(e) => {
-                eprintln!("{}\n",e);
-                eprintln!("If the database has not been created run : \n $ sqlx database setup \n");
+                eprintln!("{}\n", e);
+                eprintln!("If the database has not yet been created, run: \n   $ sqlx database setup\n");
                 panic!("database connection error");
             }
         }
-    } 
-
+    }
+    /// Get a reference to the database connection pool.
     pub fn get_pool(&self) -> &DatabasePool {
         &self.0
     }
 }
 
-
-#[derive(Debug,Clone,Display,From,Serialize,Deserialize)]
+/// Internal database ID that can be used for any ID purposes.
+#[derive(Clone, Debug, From, Display, Deserialize, Serialize)]
 pub struct DbId(Uuid);
 
 impl DbId {
-    pub fn new() -> Self {
-        // using into function converts because we have implemented From
+    /// Create a new database ID.
+    pub fn new() -> DbId {
         Uuid::new_v4().into()
     }
 
-    // this is important when we want to send all 0 to some client
-    // useful for hiding the actual uuid
-    pub fn nil() -> Self {
+    /// Create an empty database ID.
+    ///
+    /// This database ID is always the same. It can be used to obscure an
+    /// actual ID when working with clients.
+    pub fn nil() -> DbId {
         Self(Uuid::nil())
     }
 }
 
+impl From<DbId> for String {
+    fn from(id: DbId) -> Self {
+        format!("{}", id.0)
+    }
+}
+
+/// The default behavior is to create a [`DbId`]
 impl Default for DbId {
     fn default() -> Self {
         Self::new()
     }
 }
 
+
 impl FromStr for DbId {
     type Err = uuid::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(Uuid::parse_str(s)?))
+    fn from_str(id: &str) -> Result<Self, Self::Err> {
+        Ok(DbId(Uuid::parse_str(id)?))
     }
 }
 
-impl From<DbId> for String {
-    fn from(id: DbId) -> Self {
-        format!("{}",id)
+#[cfg(test)]
+pub mod test {
+    use crate::data::*;
+    use tokio::runtime::Handle;
+
+    pub fn new_db(handle: &Handle) -> AppDatabase {
+        use sqlx::migrate::Migrator;
+        use std::path::Path;
+        handle.block_on(async move {
+            let db = Database::new(":memory:").await;
+            let migrator = Migrator::new(Path::new("./migrations")).await.unwrap();
+            let pool = db.get_pool();
+            migrator.run(pool).await.unwrap();
+            db
+        })
     }
 }

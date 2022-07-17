@@ -1,28 +1,38 @@
-use chrono::{DateTime,Utc,NaiveDateTime};
-use serde::{Serialize,Deserialize};
+//! Time wrapper structure.
+
+use chrono::{DateTime, NaiveDateTime, Utc};
 use derive_more::From;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-#[derive(Debug,Clone,Serialize,Deserialize,From)]
+/// This type uses Utc time only.
+#[derive(Clone, Debug, From, Deserialize, Serialize)]
 pub struct Time(DateTime<Utc>);
 
 impl Time {
+    /// Get the underlying ['DateTime']
     pub fn into_inner(self) -> DateTime<Utc> {
         self.0
     }
 
-    pub fn fron_naive_utc(local:NaiveDateTime) -> Self {
-        Time(DateTime::from_utc(local, Utc))
+    /// Return the number of seconds in the Time.
+    pub fn timestamp(&self) -> i64 {
+        self.0.timestamp()
     }
 
+    /// Convert a [`NaiveDateTime`] into a [`Time`]
+    pub fn from_naive_utc(datetime: NaiveDateTime) -> Self {
+        Time(DateTime::from_utc(datetime, Utc))
+    }
 }
 
-impl FromStr for Time{
+/// The format required is `YYYY-MM-DDThh:mm:ssZ`.
+///
+/// See the[`chrono`](chrono::format::strftime) docs for more info.
+impl FromStr for Time {
     type Err = chrono::ParseError;
-    // what we are trying to do here is whenever we get a time like 2022-05-22 we 
-    // append time with it and then check if it can be parsed into DateTime<Utc>
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match format!("{}T00:00:00Z",s).parse::<DateTime<Utc>>() {
+        match format!("{}T00:00:00Z", s).parse::<DateTime<Utc>>() {
             Ok(time) => Ok(time.into()),
             Err(e) => Err(e)
         }

@@ -1,42 +1,43 @@
-use serde::{ Deserialize, Serialize};
-use super::super::ClipError;
+use crate::domain::clip::ClipError;
+use serde::{Deserialize, Serialize};
+use rocket::form::{self, FromFormField, ValueField};
 use std::str::FromStr;
-use rocket::form::{FromFormField,ValueField,self};
 
-#[derive(Debug,Clone,Serialize,Deserialize,PartialEq,PartialOrd)]
+/// The password field for a [`Clip`](crate::domain::clip::Clip).
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
 pub struct Password(Option<String>);
 
-impl Password{
-    pub fn new<T:Into<Option<String>>> (password:T) -> Result<Self,ClipError> {
-        // Into<Option<String>> let's us have both string and optional string as argumen
-        let password : Option<String> = password.into();
-
+impl Password {
+    /// Create a new `Password` field.
+    ///
+    /// There are no complexity checks currently implemented, however, if
+    /// some were to be added, then a [`ClipError`] should be returned.
+    pub fn new<T: Into<Option<String>>>(password: T) -> Result<Self, ClipError> {
+        let password: Option<String> = password.into();
         match password {
-            Some(pass) => {
-                if pass.trim().is_empty() {
+            Some(password) => {
+                if !password.trim().is_empty() {
+                    Ok(Self(Some(password)))
+                } else {
                     Ok(Self(None))
-                }
-                else {
-                    Ok(Self(Some(pass)))
                 }
             }
             None => Ok(Self(None))
         }
-        // We are always returning Ok here because we want to have the option to have 
-        // empty password, Here is the place where we can have checks on our password 
-        // and return a ClipError ( checks like length and all )
     }
 
+    /// Return the underlying [`String`].
     pub fn into_inner(self) -> Option<String> {
         self.0
     }
 
+    /// Returns whether a password has been set.
     pub fn has_password(&self) -> bool {
         self.0.is_some()
     }
-
 }
 
+/// The Default implementation is no password.
 impl Default for Password {
     fn default() -> Self {
         Self(None)
@@ -51,11 +52,30 @@ impl FromStr for Password {
 }
 
 #[rocket::async_trait]
-impl<'v> FromFormField<'v> for Password {
-    fn from_value(field:ValueField< 'v>) -> form::Result< 'v,Self> {
-        Ok(
-            Self::new(field.value.to_owned())
-                .map_err(|e| form::Error::validation(format!("{}",e)))?
+impl<'r> FromFormField<'r> for Password {
+    fn from_value(field: ValueField<'r>) -> form::Result<'r, Self> {
+        Ok(Self::new(field.value.to_owned())
+            .map_err(|e| form::Error::validation(format!("{}", e)))?
         )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Password;
+
+    #[test]
+    fn empty_password_is_none() {
+        assert_eq!(false, Password::new("".to_owned()).unwrap().has_password());
+    }
+
+    #[test]
+    fn default_is_none() {
+        assert_eq!(false, Password::default().has_password());
+    }
+
+    #[test]
+    fn accepts_valid_password() {
+        assert!(Password::new("123".to_owned()).unwrap().has_password());
     }
 }
